@@ -27,6 +27,7 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import uuid from "react-native-uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getMyData, fetchUserData } from "../services/utils";
 
 const NewMessageScreen = ({ navigation }) => {
   const messageInputRef = useRef(null);
@@ -34,103 +35,55 @@ const NewMessageScreen = ({ navigation }) => {
 
   const [addReceiverAvailable, setAddReceiverAvailable] = useState(true);
 
-  const clearAsyncStorage = async () => {
-    try {
-      await AsyncStorage.clear();
-      console.log("AsyncStorage has been cleared!");
-    } catch (error) {
-      console.error("Error clearing AsyncStorage:", error.message);
-    }
-  };
-
-  const getUserData = async () => {
-    try {
-      const jsonString = await AsyncStorage.getItem("userData");
-      if (jsonString !== null) {
-        // We have data!!
-        const userData = JSON.parse(jsonString);
-        return userData;
-      } else {
-        console.log("No user data found");
-        return null; // No user data stored
-      }
-    } catch (error) {
-      console.error("AsyncStorage error: ", error.message);
-      return null; // In case of error, return null or handle accordingly
-    }
-  };
-
-  const fetchUserData = async (userEmail) => {
-    // Reference to the "users" collection
-    const usersRef = collection(db, "users");
-
-    // Create a query against the collection for the receiver_username
-    const q = query(usersRef, where("email", "==", userEmail));
-    // Execute the query
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      console.log("No user found.");
-      return null; //
-    } else {
-      const userData = querySnapshot.docs[0].data();
-      return userData;
-    }
-  };
-
   async function findOrCreateConversation(receiverUsername) {
-    const userData = await getUserData();
+    const myData = await getMyData();
     const receiverData = await fetchUserData(receiverUsername);
     // Reference to the "conversations" collection
     const conversationsRef = collection(db, "conversations");
 
-    // First query: find conversations that include the current user
-    const queryUser = query(
+    // Query if conversation already exists
+    const q = query(
       conversationsRef,
-      where("userEmails", "array-contains", userData.email)
-    );
-
-    // Second query: find conversations that include the receiver
-    const queryReceiver = query(
-      conversationsRef,
-      where("userEmails", "array-contains", receiverData.email)
+      where("sender_email", "==", myData.email),
+      where("receiver_email", "==", receiverData.email)
     );
 
     try {
       // Execute both queries
-      const [userSnap, receiverSnap] = await Promise.all([
-        getDocs(queryUser),
-        getDocs(queryReceiver),
-      ]);
+      const querySnapshot = await getDocs(q);
 
-      // Extract conversation IDs from both query results
-      const userConversations = new Set(userSnap.docs.map((doc) => doc.id));
-      const receiverConversations = new Set(
-        receiverSnap.docs.map((doc) => doc.id)
-      );
-      console.log("User Conversations IDs:", [...userConversations]);
-      console.log("Receiver Conversations IDs:", [...receiverConversations]);
-
-      // Find the intersection of both sets (conversation IDs present in both)
-      const commonConversations = [...userConversations].filter((id) =>
-        receiverConversations.has(id)
-      );
-
-      if (commonConversations.length > 0) {
+      if (!querySnapshot.empty) {
         // If there are common conversations, proceed with the first one found
         console.log(
-          `Common conversation found with ID: ${commonConversations[0]}`
+          `Common conversation found with ID: ${querySnapshot.docs[0].id}`
         );
-        return commonConversations[0]; // or handle multiple common conversations as needed
+        return querySnapshot.docs[0];
       } else {
         // Create a new conversation
         const newConversationRef = await addDoc(conversationsRef, {
           conversation_id: uuid.v1(), // Consider using Firestore's automatic document IDs instead
           last_message: "Test message",
           last_message_timestamp: serverTimestamp(),
-          userEmails: [userData.email, receiverData.email], // Example: using email to identify users
+          receiver_email: receiverData.email,
+          sender_email: myData.email,
+        });
+
+        // If you create a conversation with yourself, you should only create one conversation
+        if (receiverData.email === myData.email) {
+          console.log("Creating a conversation with myself");
+          return null;
+        }
+
+        // Needed: Create a new conversation (inverse) for receiver
+        const newConversationRef2 = await addDoc(conversationsRef, {
+          conversation_id: uuid.v1(), // Consider using Firestore's automatic document IDs instead
+          last_message: "Test message",
+          last_message_timestamp: serverTimestamp(),
+          receiver_email: myData.email,
+          sender_email: receiverData.email,
         });
         console.log(
-          `New conversation created with ID: ${newConversationRef.id}`
+          `New conversations created with IDs: [${newConversationRef.id}, ${newConversationRef2.id}]`
         );
         return newConversationRef.id;
       }

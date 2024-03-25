@@ -19,6 +19,7 @@ import {
   query,
   onSnapshot,
   toDate,
+  where,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
@@ -26,32 +27,56 @@ import { useNavigation } from "@react-navigation/native";
 import { Entypo } from "@expo/vector-icons";
 
 import ConversationPreview from "../components/ConversationPreview";
+import { getMyData, fetchUserData } from "../services/utils";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [conversations, setConversations] = useState([]);
 
   useLayoutEffect(() => {
-    const collectionRef = collection(db, "conversations");
-    const q = query(collectionRef, orderBy("last_message_timestamp", "desc"));
+    const fetchData = async () => {
+      const myData = await getMyData();
+      const conversationsRef = collection(db, "conversations");
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      console.log("Snapshot");
-      setConversations(
-        querySnapshot.docs.map((doc) => ({
-          conversation_id: doc.data().conversation_id,
-          last_message: doc.data().last_message,
-          last_message_timestamp: doc
-            .data()
-            .last_message_timestamp?.toDate()
-            .toLocaleString(), // Corrected method name here
-          receiver_name: doc.data().receiver_name,
-          receiver_username: doc.data().receiver_username,
-        }))
+      // Query if conversation already exists
+      const q = query(
+        conversationsRef,
+        where("sender_email", "==", myData.email),
+        orderBy("last_message_timestamp", "desc")
       );
-    });
-    return () => unsubscribe();
-  }, []);
+
+      const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+        console.log("Snapshot");
+        const conversationsPromises = querySnapshot.docs.map(async (doc) => {
+          const receiverData = await fetchUserData(doc.data().receiver_email);
+          return {
+            conversation_id: doc.id, // Typically, the conversation_id is the document ID
+            last_message: doc.data().last_message,
+            last_message_timestamp: doc
+              .data()
+              .last_message_timestamp?.toDate()
+              .toLocaleString(),
+            receiver_name: `${receiverData.first_name} ${receiverData.last_name}`, // Assuming fetchUserData correctly resolves
+            receiver_email: doc.data().receiver_email,
+          };
+        });
+
+        // Wait for all the fetchUserData promises to resolve
+        const conversations = await Promise.all(conversationsPromises);
+        setConversations(conversations);
+      });
+
+      return unsubscribe;
+    };
+
+    fetchData().catch(console.error);
+
+    // Cleanup function
+    return () => {
+      // If fetchData is fast, unsubscribe might not be set immediately.
+      // Consider managing unsubscribe state or ensuring fetchData resolves before cleanup.
+    };
+  }, []); // Ensure this is correctly dependency managed
 
   useLayoutEffect(() => {
     navigation.setOptions({
