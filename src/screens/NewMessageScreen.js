@@ -49,7 +49,7 @@ const NewMessageScreen = ({ navigation }) => {
     );
 
     try {
-      // Execute both queries
+      // Execute query
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {

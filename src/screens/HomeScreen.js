@@ -27,7 +27,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Entypo } from "@expo/vector-icons";
 
 import ConversationPreview from "../components/ConversationPreview";
-import { getMyData, fetchUserData } from "../services/utils";
+import { getMyData, fetchUserData, clearAsyncStorage } from "../services/utils";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -107,6 +107,7 @@ const HomeScreen = () => {
         {
           text: "Yes",
           onPress: () => {
+            clearAsyncStorage();
             signOut(auth)
               .then(() => {
                 // Sign-out successful.
@@ -132,6 +133,8 @@ const HomeScreen = () => {
             navigateChat={() =>
               navigation.navigate("Chat", {
                 conversationId: conversation.conversation_id,
+                receiverName: conversation.receiver_name,
+                receiverEmail: conversation.receiver_email,
               })
             }
             msgAvatar={"https://i.pravatar.cc/300"}

@@ -13,16 +13,18 @@ import {
   query,
   onSnapshot,
   serverTimestamp,
+  getDocs,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { GiftedChat } from "react-native-gifted-chat";
+import { getMyData, fetchUserData } from "../services/utils";
 
 const ChatScreen = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
-  const { conversationId } = route.params;
+  const { conversationId, receiverEmail } = route.params;
 
   useLayoutEffect(() => {
     // Reference to the "messages" collection
@@ -77,19 +79,61 @@ const ChatScreen = ({ navigation, route }) => {
   }, [navigation]);
 
   const onSend = useCallback((messages = []) => {
+    if (messages.length === 0) return;
+
     setMessages((previousMessages) =>
       GiftedChat.append(previousMessages, messages)
     );
 
+    // Immediately handle the first message
     const { _id, text, user } = messages[0];
-    addDoc(collection(db, "messages"), {
-      conversation_id: conversationId,
-      createdAt: serverTimestamp(),
-      message_id: _id,
-      text,
-      user,
-    });
-  }, []);
+
+    // Define an async function to handle Firestore operations
+    const sendMessage = async () => {
+      // Add message to "messages" collection for the current conversation
+      await addDoc(collection(db, "messages"), {
+        conversation_id: conversationId,
+        createdAt: serverTimestamp(),
+        message_id: _id,
+        text,
+        user,
+      });
+
+      try {
+        const myData = await getMyData();
+
+        // Query to find the receiver's conversation based on sender and receiver emails
+        const conversationsRef = collection(db, "conversations");
+        console.log(receiverEmail);
+        console.log(myData);
+        const q = query(
+          conversationsRef,
+          where("sender_email", "==", receiverEmail), // Assuming `user.email` is sender's email
+          where("receiver_email", "==", myData.email) // Assuming `myData.email` is receiver's email
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const snapshotConversationId = querySnapshot.docs[0].id;
+
+          // If a conversation is found, add the message to "messages" collection for the receiver
+          await addDoc(collection(db, "messages"), {
+            conversation_id: snapshotConversationId,
+            createdAt: serverTimestamp(),
+            message_id: _id,
+            text,
+            user,
+          });
+        }
+      } catch (error) {
+        console.error("Error sending message: ", error);
+      }
+    };
+
+    // Execute the async operation
+    sendMessage().catch(console.error);
+  }, []); // Add necessary dependencies
 
   return (
     <GiftedChat

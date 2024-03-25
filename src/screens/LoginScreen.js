@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { fetchUserData, storeUserData } from "../services/utils";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -14,8 +15,12 @@ const LoginScreen = () => {
     navigation.navigate("Signup");
   };
 
-  const onHandleLogin = () => {
+  const onHandleLogin = async () => {
     if (email !== "" && password !== "") {
+      const myData = await fetchUserData(email);
+      storeUserData(myData.first_name, myData.last_name, myData.email);
+      console.log(myData);
+
       signInWithEmailAndPassword(auth, email, password)
         .then(() => console.log("Login success"))
         .catch((err) => Alert.alert("Login error:", err.message));

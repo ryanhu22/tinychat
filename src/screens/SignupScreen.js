@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import uuid from "react-native-uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { storeUserData } from "../services/utils";
 
 const SignupScreen = () => {
   const navigation = useNavigation();
@@ -32,14 +33,6 @@ const SignupScreen = () => {
 
   const navigateLogin = () => {
     navigation.navigate("Login");
-  };
-
-  const storeUserData = async (data) => {
-    try {
-      await AsyncStorage.setItem("userData", JSON.stringify(data));
-    } catch (error) {
-      console.error("AsyncStorage error: ", error.message);
-    }
   };
 
   const onHandleSignup = async () => {
@@ -69,11 +62,7 @@ const SignupScreen = () => {
         console.log(`New user created with ID: ${newUserRef.id}`);
 
         // Store user data in AsyncStorage
-        await storeUserData({
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-        });
+        await storeUserData(firstName, lastName, email);
       } catch (err) {
         // If creating the Firestore document fails, sign out the user and potentially handle user deletion
         console.error("Failed to create user document:", err.message);

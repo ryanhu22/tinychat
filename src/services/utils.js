@@ -45,6 +45,17 @@ const fetchUserData = async (userEmail) => {
   }
 };
 
+const storeUserData = async (first_name, last_name, email) => {
+  try {
+    await AsyncStorage.setItem(
+      "userData",
+      JSON.stringify({ first_name, last_name, email })
+    );
+  } catch (error) {
+    console.error("AsyncStorage error: ", error.message);
+  }
+};
+
 const clearAsyncStorage = async () => {
   try {
     await AsyncStorage.clear();
@@ -54,4 +65,4 @@ const clearAsyncStorage = async () => {
   }
 };
 
-export { getMyData, fetchUserData };
+export { getMyData, fetchUserData, storeUserData, clearAsyncStorage };
