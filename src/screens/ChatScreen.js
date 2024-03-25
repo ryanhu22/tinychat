@@ -81,93 +81,77 @@ const ChatScreen = ({ navigation, route }) => {
     });
   }, [navigation]);
 
-  const onSend = useCallback((messages = []) => {
-    if (messages.length === 0) return;
+  const addMessageToFirestore = async (conversationId, _id, text, user) => {
+    await addDoc(collection(db, "messages"), {
+      conversation_id: conversationId,
+      createdAt: serverTimestamp(),
+      message_id: _id,
+      text,
+      user,
+    });
+  };
 
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, messages)
+  const updateConversationLastMessage = async (conversationId, text) => {
+    const docRef = doc(db, "conversations", conversationId);
+    await setDoc(
+      docRef,
+      {
+        last_message: text,
+        last_message_timestamp: serverTimestamp(),
+      },
+      { merge: true }
     );
+  };
 
-    // Immediately handle the first message
-    const { _id, text, user } = messages[0];
+  const findReceiverConversationId = async (receiverEmail, myEmail) => {
+    const q = query(
+      collection(db, "conversations"),
+      where("sender_email", "==", receiverEmail),
+      where("receiver_email", "==", myEmail)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty ? "" : querySnapshot.docs[0].id;
+  };
 
-    // Define an async function to handle Firestore operations
-    const sendMessage = async () => {
-      // Add message to "messages" collection for the current conversation
-      await addDoc(collection(db, "messages"), {
-        conversation_id: conversationId,
-        createdAt: serverTimestamp(),
-        message_id: _id,
-        text,
-        user,
-      });
+  const onSend = useCallback(
+    (messages = []) => {
+      if (messages.length === 0) return;
 
-      // Update receiver's DB
-      try {
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, messages)
+      );
+
+      const handleSendMessage = async () => {
+        const { _id, text, user } = messages[0];
         const myData = await getMyData();
 
-        // If you send a message to yourself, you should only see one message
-        if (receiverEmail === myData.email) {
-          console.log("Sending a message to myself");
-          return null;
-        }
+        await addMessageToFirestore(conversationId, _id, text, user);
 
-        // Query to find the receiver's conversation based on sender and receiver emails
-        const conversationsRef = collection(db, "conversations");
-        const q = query(
-          conversationsRef,
-          where("sender_email", "==", receiverEmail), // Assuming `user.email` is sender's email
-          where("receiver_email", "==", myData.email) // Assuming `myData.email` is receiver's email
-        );
-
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const snapshotConversationId = querySnapshot.docs[0].id;
-
-          // If a conversation is found, add the message to "messages" collection for the receiver
-          await addDoc(collection(db, "messages"), {
-            conversation_id: snapshotConversationId,
-            createdAt: serverTimestamp(),
-            message_id: _id,
-            text,
-            user,
-          });
-        }
-      } catch (error) {
-        console.error("Error sending message: ", error);
-      }
-
-      // Update Conversations DB
-      try {
-        const conversationsRef = collection(db, "conversations");
-        const docRef = doc(conversationsRef, conversationId);
-
-        const docSnapshot = await getDoc(docRef);
-
-        if (docSnapshot.exists()) {
-          console.log(docSnapshot.data());
-
-          // Update the last message and timestamp of the conversation
-          await setDoc(
-            docRef,
-            {
-              last_message: text,
-              last_message_timestamp: serverTimestamp(),
-            },
-            { merge: true }
-          ); // Use merge: true to only update provided fields
+        if (receiverEmail !== myData.email) {
+          const receiverConversationId = await findReceiverConversationId(
+            receiverEmail,
+            myData.email
+          );
+          if (receiverConversationId) {
+            await addMessageToFirestore(
+              receiverConversationId,
+              _id,
+              text,
+              user
+            );
+            await updateConversationLastMessage(receiverConversationId, text);
+          }
         } else {
-          console.log("No such conversation exists!");
+          console.log("Sending a message to myself");
         }
-      } catch (error) {
-        console.error("Error updating conversations db: ", error);
-      }
-    };
 
-    // Execute the async operation
-    sendMessage().catch(console.error);
-  }, []); // Add necessary dependencies
+        await updateConversationLastMessage(conversationId, text);
+      };
+
+      handleSendMessage().catch(console.error);
+    },
+    [setMessages, conversationId]
+  ); // Ensure to include all dependencies used within the callback
 
   return (
     <GiftedChat
