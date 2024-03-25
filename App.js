@@ -1,20 +1,49 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { AuthStack, HomeStack } from "./src/navigation";
+import { NavigationContainer } from "@react-navigation/native";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./src/config/firebase";
 
-export default function App() {
+const AuthenticatedUserContext = createContext({});
+
+const AuthenticatedUserProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <AuthenticatedUserContext.Provider value={{ user, setUser }}>
+      {children}
+    </AuthenticatedUserContext.Provider>
+  );
+};
+
+function RootNavigator() {
+  const { user, setUser } = useContext(AuthenticatedUserContext);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (authenticatedUser) => {
+      authenticatedUser ? setUser(authenticatedUser) : setUser(null);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user]);
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+  return (
+    <NavigationContainer>
+      {user ? <HomeStack /> : <AuthStack />}
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  return (
+    <AuthenticatedUserProvider>
+      <RootNavigator />
+    </AuthenticatedUserProvider>
+  );
+}
