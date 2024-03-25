@@ -19,7 +19,6 @@ const LoginScreen = () => {
     if (email !== "" && password !== "") {
       const myData = await fetchUserData(email);
       storeUserData(myData.first_name, myData.last_name, myData.email);
-      console.log(myData);
 
       signInWithEmailAndPassword(auth, email, password)
         .then(() => console.log("Login success"))

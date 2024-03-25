@@ -54,7 +54,6 @@ const SignupScreen = () => {
         // If the above succeeds, proceed to create a user document in Firestore
         const usersRef = collection(db, "users");
         const newUserRef = await addDoc(usersRef, {
-          user_uuid: uuid.v1(),
           first_name: firstName,
           last_name: lastName,
           email: email, // Consider storing user's email only if necessary for your app's functionality

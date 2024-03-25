@@ -15,7 +15,7 @@ const getMyData = async () => {
   try {
     const jsonString = await AsyncStorage.getItem("userData");
     if (jsonString !== null) {
-      // We have data!!
+      // We have data!
       const myData = JSON.parse(jsonString);
       return myData;
     } else {
@@ -45,6 +45,7 @@ const fetchUserData = async (userEmail) => {
   }
 };
 
+// params: first_name, last_name, email
 const storeUserData = async (first_name, last_name, email) => {
   try {
     await AsyncStorage.setItem(

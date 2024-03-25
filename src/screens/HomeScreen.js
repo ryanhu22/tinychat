@@ -38,7 +38,7 @@ const HomeScreen = () => {
       const myData = await getMyData();
       const conversationsRef = collection(db, "conversations");
 
-      // Query if conversation already exists
+      // Query MY conversations
       const q = query(
         conversationsRef,
         where("sender_email", "==", myData.email),
@@ -50,13 +50,13 @@ const HomeScreen = () => {
         const conversationsPromises = querySnapshot.docs.map(async (doc) => {
           const receiverData = await fetchUserData(doc.data().receiver_email);
           return {
-            conversation_id: doc.id, // Typically, the conversation_id is the document ID
+            conversation_id: doc.id,
             last_message: doc.data().last_message,
             last_message_timestamp: doc
               .data()
               .last_message_timestamp?.toDate()
               .toLocaleString(),
-            receiver_name: `${receiverData.first_name} ${receiverData.last_name}`, // Assuming fetchUserData correctly resolves
+            receiver_name: `${receiverData.first_name} ${receiverData.last_name}`,
             receiver_email: doc.data().receiver_email,
           };
         });
@@ -76,7 +76,7 @@ const HomeScreen = () => {
       // If fetchData is fast, unsubscribe might not be set immediately.
       // Consider managing unsubscribe state or ensuring fetchData resolves before cleanup.
     };
-  }, []); // Ensure this is correctly dependency managed
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -94,7 +94,6 @@ const HomeScreen = () => {
   }, [navigation]);
 
   const handleSignOut = () => {
-    console.log("HERE");
     Alert.alert(
       "Log Out",
       "Are you sure you want to log out?",

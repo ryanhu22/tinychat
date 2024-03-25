@@ -38,7 +38,6 @@ const NewMessageScreen = ({ navigation }) => {
   async function findOrCreateConversation(receiverUsername) {
     const myData = await getMyData();
     const receiverData = await fetchUserData(receiverUsername);
-    // Reference to the "conversations" collection
     const conversationsRef = collection(db, "conversations");
 
     // Query if conversation already exists
@@ -57,12 +56,11 @@ const NewMessageScreen = ({ navigation }) => {
         console.log(
           `Common conversation found with ID: ${querySnapshot.docs[0].id}`
         );
-        return querySnapshot.docs[0];
+        return null;
       } else {
         // Create a new conversation
-        const newConversationRef = await addDoc(conversationsRef, {
-          conversation_id: uuid.v1(), // Consider using Firestore's automatic document IDs instead
-          last_message: "Test message",
+        const primaryConversationRef = await addDoc(conversationsRef, {
+          last_message: "",
           last_message_timestamp: serverTimestamp(),
           receiver_email: receiverData.email,
           sender_email: myData.email,
@@ -75,17 +73,17 @@ const NewMessageScreen = ({ navigation }) => {
         }
 
         // Needed: Create a new conversation (inverse) for receiver
-        const newConversationRef2 = await addDoc(conversationsRef, {
-          conversation_id: uuid.v1(), // Consider using Firestore's automatic document IDs instead
-          last_message: "Test message",
+        const secondaryConversationRef = await addDoc(conversationsRef, {
+          last_message: "",
           last_message_timestamp: serverTimestamp(),
           receiver_email: myData.email,
           sender_email: receiverData.email,
         });
+
         console.log(
-          `New conversations created with IDs: [${newConversationRef.id}, ${newConversationRef2.id}]`
+          `New conversations created with IDs: [${primaryConversationRef.id}, ${secondaryConversationRef.id}]`
         );
-        return newConversationRef.id;
+        return null;
       }
     } catch (error) {
       console.error("Error finding conversation:", error);

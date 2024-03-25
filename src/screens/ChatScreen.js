@@ -14,6 +14,9 @@ import {
   onSnapshot,
   serverTimestamp,
   getDocs,
+  doc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
@@ -24,7 +27,7 @@ import { getMyData, fetchUserData } from "../services/utils";
 
 const ChatScreen = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
-  const { conversationId, receiverEmail } = route.params;
+  const { conversationId, receiverName, receiverEmail } = route.params;
 
   useLayoutEffect(() => {
     // Reference to the "messages" collection
@@ -72,7 +75,7 @@ const ChatScreen = ({ navigation, route }) => {
             source={{ uri: "https://i.pravatar.cc/300" }} // Replace with your avatar image URI
             style={{ width: 40, height: 40, borderRadius: 20 }}
           />
-          <Text className="text-black font-bold">User Name</Text>
+          <Text className="text-black font-bold">{receiverName}</Text>
         </View>
       ),
     });
@@ -99,13 +102,18 @@ const ChatScreen = ({ navigation, route }) => {
         user,
       });
 
+      // Update receiver's DB
       try {
         const myData = await getMyData();
 
+        // If you send a message to yourself, you should only see one message
+        if (receiverEmail === myData.email) {
+          console.log("Sending a message to myself");
+          return null;
+        }
+
         // Query to find the receiver's conversation based on sender and receiver emails
         const conversationsRef = collection(db, "conversations");
-        console.log(receiverEmail);
-        console.log(myData);
         const q = query(
           conversationsRef,
           where("sender_email", "==", receiverEmail), // Assuming `user.email` is sender's email
@@ -128,6 +136,32 @@ const ChatScreen = ({ navigation, route }) => {
         }
       } catch (error) {
         console.error("Error sending message: ", error);
+      }
+
+      // Update Conversations DB
+      try {
+        const conversationsRef = collection(db, "conversations");
+        const docRef = doc(conversationsRef, conversationId);
+
+        const docSnapshot = await getDoc(docRef);
+
+        if (docSnapshot.exists()) {
+          console.log(docSnapshot.data());
+
+          // Update the last message and timestamp of the conversation
+          await setDoc(
+            docRef,
+            {
+              last_message: text,
+              last_message_timestamp: serverTimestamp(),
+            },
+            { merge: true }
+          ); // Use merge: true to only update provided fields
+        } else {
+          console.log("No such conversation exists!");
+        }
+      } catch (error) {
+        console.error("Error updating conversations db: ", error);
       }
     };
 
