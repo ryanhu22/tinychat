@@ -4,7 +4,6 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import DefaultProfilePicture from "../assets/images/default_profile_picture.jpeg";
 
 const ConversationPreview = ({
   navigateChat,
@@ -31,10 +30,7 @@ const ConversationPreview = ({
         />
       ) : null}
       <View className="flex flex-row items-center ml-2">
-        <Image
-          source={msgAvatar ? { uri: msgAvatar } : DefaultProfilePicture}
-          className="rounded-full h-12 w-12"
-        />
+        <Image source={{ uri: msgAvatar }} className="rounded-full h-12 w-12" />
         <View className="flex-1 ml-4">
           <Text className="font-bold">{msgName}</Text>
           <Text className="text-gray-500">{msgLastMessage}</Text>

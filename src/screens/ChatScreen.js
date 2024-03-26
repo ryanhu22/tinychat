@@ -28,8 +28,13 @@ import DefaultProfilePicture from "../assets/images/default_profile_picture.jpeg
 
 const ChatScreen = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
-  const { conversationId, receiverName, receiverEmail, receiverAvatar } =
-    route.params;
+  const {
+    conversationId,
+    receiverName,
+    receiverEmail,
+    receiverAvatar,
+    myAvatar,
+  } = route.params;
 
   useLayoutEffect(() => {
     // Reference to the "messages" collection
@@ -186,7 +191,7 @@ const ChatScreen = ({ navigation, route }) => {
       onSend={(messages) => onSend(messages)}
       user={{
         _id: auth?.currentUser?.email,
-        // avatar: { receiverAvatar },
+        avatar: myAvatar,
       }}
       messagesContainerStyle={{
         backgroundColor: "#fff",

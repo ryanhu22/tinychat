@@ -28,11 +28,14 @@ import { Entypo } from "@expo/vector-icons";
 
 import ConversationPreview from "../components/ConversationPreview";
 import { getMyData, fetchUserData, clearAsyncStorage } from "../services/utils";
-import DefaultProfilePicture from "../assets/images/default_profile_picture.jpeg";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  const [avatar, setAvatar] = useState("");
+  const [avatar, setAvatar] = useState(
+    "https://firebasestorage.googleapis.com/v0/b/tinychat-0613.appspot.com/o/default_profile_picture.jpeg?alt=media&token=aabbaef0-3ec5-448d-919a-dc8fe20b0605"
+  );
+  const defaultAvatar =
+    "https://firebasestorage.googleapis.com/v0/b/tinychat-0613.appspot.com/o/default_profile_picture.jpeg?alt=media&token=aabbaef0-3ec5-448d-919a-dc8fe20b0605";
   const [conversations, setConversations] = useState([]);
 
   useLayoutEffect(() => {
@@ -44,10 +47,7 @@ const HomeScreen = () => {
       const myDBData = await fetchUserData(myData.email);
       if (myDBData && myDBData.avatar) {
         setAvatar(myDBData.avatar);
-      } else {
-        setAvatar(DefaultProfilePicture);
       }
-
       const conversationsRef = collection(db, "conversations");
 
       // Query MY conversations
@@ -114,17 +114,10 @@ const HomeScreen = () => {
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={handleSignOut}>
-          {avatar ? (
-            <Image
-              source={{ uri: avatar }}
-              style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
-            />
-          ) : (
-            <Image
-              source={DefaultProfilePicture}
-              style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
-            />
-          )}
+          <Image
+            source={{ uri: avatar }}
+            style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
+          />
         </TouchableOpacity>
       ),
       headerRight: () => (
@@ -176,10 +169,15 @@ const HomeScreen = () => {
                 conversationId: conversation.conversation_id,
                 receiverName: conversation.receiver_name,
                 receiverEmail: conversation.receiver_email,
-                receiverAvatar: conversation.avatar,
+                receiverAvatar: conversation.avatar
+                  ? conversation.avatar
+                  : defaultAvatar,
+                myAvatar: avatar,
               });
             }}
-            msgAvatar={conversation.avatar}
+            msgAvatar={
+              conversation.avatar ? conversation.avatar : defaultAvatar
+            }
             msgName={conversation.receiver_name}
             msgLastMessage={conversation.last_message}
             msgLastMessageTimestamp={conversation.last_message_timestamp}
