@@ -28,20 +28,33 @@ import { Entypo } from "@expo/vector-icons";
 
 import ConversationPreview from "../components/ConversationPreview";
 import { getMyData, fetchUserData, clearAsyncStorage } from "../services/utils";
+import DefaultProfilePicture from "../assets/images/default_profile_picture.jpeg";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const [avatar, setAvatar] = useState("");
   const [conversations, setConversations] = useState([]);
 
   useLayoutEffect(() => {
     const fetchData = async () => {
       const myData = await getMyData();
+      if (!myData) {
+        return;
+      }
+      const myDBData = await fetchUserData(myData.email);
+      if (myDBData && myDBData.avatar) {
+        setAvatar(myDBData.avatar);
+      } else {
+        setAvatar(DefaultProfilePicture);
+      }
+
       const conversationsRef = collection(db, "conversations");
 
       // Query MY conversations
       const q = query(
         conversationsRef,
         where("sender_email", "==", myData.email),
+        where("last_message", "!=", ""),
         orderBy("last_message_timestamp", "desc")
       );
 
@@ -59,6 +72,7 @@ const HomeScreen = () => {
             receiver_name: `${receiverData.first_name} ${receiverData.last_name}`,
             receiver_email: doc.data().receiver_email,
             is_unread: doc.data().is_unread,
+            avatar: receiverData.avatar ? receiverData.avatar : "",
           };
         });
 
@@ -79,11 +93,38 @@ const HomeScreen = () => {
     };
   }, []);
 
+  // useLayoutEffect(() => {
+  //   const fetchData = async () => {
+  //     const myData = await getMyData();
+  //     if (!myData) {
+  //       return;
+  //     }
+  //   };
+
+  //   fetchData().catch(console.error);
+
+  //   // Cleanup function
+  //   return () => {
+  //     // If fetchData is fast, unsubscribe might not be set immediately.
+  //     // Consider managing unsubscribe state or ensuring fetchData resolves before cleanup.
+  //   };
+  // });
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={handleSignOut}>
-          <Entypo name="menu" size={24} color="black" />
+          {avatar ? (
+            <Image
+              source={{ uri: avatar }}
+              style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
+            />
+          ) : (
+            <Image
+              source={DefaultProfilePicture}
+              style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
+            />
+          )}
         </TouchableOpacity>
       ),
       headerRight: () => (
@@ -92,7 +133,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation]);
+  }, [navigation, avatar]);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -135,9 +176,10 @@ const HomeScreen = () => {
                 conversationId: conversation.conversation_id,
                 receiverName: conversation.receiver_name,
                 receiverEmail: conversation.receiver_email,
+                receiverAvatar: conversation.avatar,
               });
             }}
-            msgAvatar={"https://i.pravatar.cc/300"}
+            msgAvatar={conversation.avatar}
             msgName={conversation.receiver_name}
             msgLastMessage={conversation.last_message}
             msgLastMessageTimestamp={conversation.last_message_timestamp}

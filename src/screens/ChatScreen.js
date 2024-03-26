@@ -24,10 +24,12 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { GiftedChat } from "react-native-gifted-chat";
 import { getMyData, fetchUserData } from "../services/utils";
+import DefaultProfilePicture from "../assets/images/default_profile_picture.jpeg";
 
 const ChatScreen = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
-  const { conversationId, receiverName, receiverEmail } = route.params;
+  const { conversationId, receiverName, receiverEmail, receiverAvatar } =
+    route.params;
 
   useLayoutEffect(() => {
     // Reference to the "messages" collection
@@ -74,7 +76,9 @@ const ChatScreen = ({ navigation, route }) => {
       headerTitle: () => (
         <View className="flex-row items-center space-x-2">
           <Image
-            source={{ uri: "https://i.pravatar.cc/300" }} // Replace with your avatar image URI
+            source={
+              receiverAvatar ? { uri: receiverAvatar } : DefaultProfilePicture
+            }
             style={{ width: 40, height: 40, borderRadius: 20 }}
           />
           <Text className="text-black font-bold">{receiverName}</Text>
@@ -182,7 +186,7 @@ const ChatScreen = ({ navigation, route }) => {
       onSend={(messages) => onSend(messages)}
       user={{
         _id: auth?.currentUser?.email,
-        avatar: "https://i.pravatar.cc/300",
+        // avatar: { receiverAvatar },
       }}
       messagesContainerStyle={{
         backgroundColor: "#fff",

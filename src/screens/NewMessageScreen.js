@@ -35,10 +35,12 @@ const NewMessageScreen = ({ navigation }) => {
   const [addReceiverAvailable, setAddReceiverAvailable] = useState(true);
 
   async function findOrCreateConversation(receiverUsername) {
-    console.log(receiverUsername);
     const myData = await getMyData();
     const receiverData = await fetchUserData(receiverUsername);
-    console.log(receiverData);
+    if (!receiverData) {
+      console.error("User not found");
+      return null;
+    }
     const conversationsRef = collection(db, "conversations");
 
     // Query if conversation already exists
