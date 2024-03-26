@@ -58,6 +58,7 @@ const HomeScreen = () => {
               .toLocaleString(),
             receiver_name: `${receiverData.first_name} ${receiverData.last_name}`,
             receiver_email: doc.data().receiver_email,
+            is_unread: doc.data().is_unread,
           };
         });
 
@@ -129,17 +130,18 @@ const HomeScreen = () => {
         {conversations.map((conversation) => (
           <ConversationPreview
             key={conversation.conversation_id}
-            navigateChat={() =>
+            navigateChat={() => {
               navigation.navigate("Chat", {
                 conversationId: conversation.conversation_id,
                 receiverName: conversation.receiver_name,
                 receiverEmail: conversation.receiver_email,
-              })
-            }
+              });
+            }}
             msgAvatar={"https://i.pravatar.cc/300"}
             msgName={conversation.receiver_name}
             msgLastMessage={conversation.last_message}
             msgLastMessageTimestamp={conversation.last_message_timestamp}
+            msgIsUnread={conversation.is_unread}
           />
         ))}
       </ScrollView>

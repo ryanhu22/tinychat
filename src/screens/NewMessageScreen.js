@@ -32,12 +32,13 @@ import { getMyData, fetchUserData } from "../services/utils";
 const NewMessageScreen = ({ navigation }) => {
   const messageInputRef = useRef(null);
   const [receiverUsername, setReceiverUsername] = useState("");
-
   const [addReceiverAvailable, setAddReceiverAvailable] = useState(true);
 
   async function findOrCreateConversation(receiverUsername) {
+    console.log(receiverUsername);
     const myData = await getMyData();
     const receiverData = await fetchUserData(receiverUsername);
+    console.log(receiverData);
     const conversationsRef = collection(db, "conversations");
 
     // Query if conversation already exists
@@ -52,11 +53,15 @@ const NewMessageScreen = ({ navigation }) => {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
+        const conversationId = querySnapshot.docs[0].id;
         // If there are common conversations, proceed with the first one found
-        console.log(
-          `Common conversation found with ID: ${querySnapshot.docs[0].id}`
-        );
-        return null;
+        console.log(`Common conversation found with ID: ${conversationId}`);
+        await navigation.goBack();
+        await navigation.navigate("Chat", {
+          conversationId: conversationId,
+          receiverName: `${receiverData.first_name} ${receiverData.last_name}`,
+          receiverEmail: receiverData.email,
+        });
       } else {
         // Create a new conversation
         const primaryConversationRef = await addDoc(conversationsRef, {
@@ -64,6 +69,14 @@ const NewMessageScreen = ({ navigation }) => {
           last_message_timestamp: serverTimestamp(),
           receiver_email: receiverData.email,
           sender_email: myData.email,
+          is_unread: false,
+        });
+
+        await navigation.goBack();
+        await navigation.navigate("Chat", {
+          conversationId: primaryConversationRef.id,
+          receiverName: `${receiverData.first_name} ${receiverData.last_name}`,
+          receiverEmail: receiverData.email,
         });
 
         // If you create a conversation with yourself, you should only create one conversation
@@ -78,6 +91,7 @@ const NewMessageScreen = ({ navigation }) => {
           last_message_timestamp: serverTimestamp(),
           receiver_email: myData.email,
           sender_email: receiverData.email,
+          is_unread: false,
         });
 
         console.log(

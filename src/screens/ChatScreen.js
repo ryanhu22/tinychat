@@ -56,6 +56,8 @@ const ChatScreen = ({ navigation, route }) => {
           };
         })
       );
+      // Mark conversation as read
+      readConversation(conversationId);
     });
     // Cleanup function to unsubscribe from the listener
     return () => unsubscribe();
@@ -91,13 +93,29 @@ const ChatScreen = ({ navigation, route }) => {
     });
   };
 
-  const updateConversationLastMessage = async (conversationId, text) => {
+  const readConversation = async (conversationId) => {
+    const docRef = doc(db, "conversations", conversationId);
+    await setDoc(
+      docRef,
+      {
+        is_unread: false,
+      },
+      { merge: true }
+    );
+  };
+
+  const updateConversationLastMessage = async (
+    conversationId,
+    text,
+    is_unread
+  ) => {
     const docRef = doc(db, "conversations", conversationId);
     await setDoc(
       docRef,
       {
         last_message: text,
         last_message_timestamp: serverTimestamp(),
+        is_unread: is_unread,
       },
       { merge: true }
     );
@@ -139,13 +157,18 @@ const ChatScreen = ({ navigation, route }) => {
               text,
               user
             );
-            await updateConversationLastMessage(receiverConversationId, text);
+            // Update receiver's conversations DB
+            await updateConversationLastMessage(
+              receiverConversationId,
+              text,
+              true
+            );
           }
         } else {
           console.log("Sending a message to myself");
         }
 
-        await updateConversationLastMessage(conversationId, text);
+        await updateConversationLastMessage(conversationId, text, false);
       };
 
       handleSendMessage().catch(console.error);
