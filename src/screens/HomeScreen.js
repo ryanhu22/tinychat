@@ -27,6 +27,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Entypo } from "@expo/vector-icons";
 
 import ConversationPreview from "../components/ConversationPreview";
+import Footer from "../components/Footer";
 import { getMyData, fetchUserData, clearAsyncStorage } from "../services/utils";
 
 const HomeScreen = () => {
@@ -59,16 +60,12 @@ const HomeScreen = () => {
       );
 
       const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-        console.log("Snapshot");
         const conversationsPromises = querySnapshot.docs.map(async (doc) => {
           const receiverData = await fetchUserData(doc.data().receiver_email);
           return {
             conversation_id: doc.id,
             last_message: doc.data().last_message,
-            last_message_timestamp: doc
-              .data()
-              .last_message_timestamp?.toDate()
-              .toLocaleString(),
+            last_message_timestamp: doc.data().last_message_timestamp?.toDate(),
             receiver_name: `${receiverData.first_name} ${receiverData.last_name}`,
             receiver_email: doc.data().receiver_email,
             is_unread: doc.data().is_unread,
@@ -92,23 +89,6 @@ const HomeScreen = () => {
       // Consider managing unsubscribe state or ensuring fetchData resolves before cleanup.
     };
   }, []);
-
-  // useLayoutEffect(() => {
-  //   const fetchData = async () => {
-  //     const myData = await getMyData();
-  //     if (!myData) {
-  //       return;
-  //     }
-  //   };
-
-  //   fetchData().catch(console.error);
-
-  //   // Cleanup function
-  //   return () => {
-  //     // If fetchData is fast, unsubscribe might not be set immediately.
-  //     // Consider managing unsubscribe state or ensuring fetchData resolves before cleanup.
-  //   };
-  // });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -159,8 +139,8 @@ const HomeScreen = () => {
   };
 
   return (
-    <View className="bg-white">
-      <ScrollView className="bg-white h-full">
+    <View className="flex-1 bg-white">
+      <ScrollView className="flex-1 bg-white h-full">
         {conversations.map((conversation) => (
           <ConversationPreview
             key={conversation.conversation_id}
@@ -185,6 +165,7 @@ const HomeScreen = () => {
           />
         ))}
       </ScrollView>
+      <Footer selected="Chats" />
     </View>
   );
 };
