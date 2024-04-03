@@ -36,6 +36,7 @@ const NewMessageScreen = ({ navigation }) => {
 
   async function findOrCreateConversation(receiverUsername) {
     const myData = await getMyData();
+    console.log(myData);
     const receiverData = await fetchUserData(receiverUsername);
     if (!receiverData) {
       console.error("User not found");
@@ -63,6 +64,7 @@ const NewMessageScreen = ({ navigation }) => {
           conversationId: conversationId,
           receiverName: `${receiverData.first_name} ${receiverData.last_name}`,
           receiverEmail: receiverData.email,
+          myAvatar: myData.avatar,
         });
       } else {
         // Create a new conversation
@@ -79,6 +81,7 @@ const NewMessageScreen = ({ navigation }) => {
           conversationId: primaryConversationRef.id,
           receiverName: `${receiverData.first_name} ${receiverData.last_name}`,
           receiverEmail: receiverData.email,
+          myAvatar: myData.avatar,
         });
 
         // If you create a conversation with yourself, you should only create one conversation

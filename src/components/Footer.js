@@ -1,36 +1,39 @@
 import React from "react";
 import { View, TouchableOpacity, Text, Image } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons"; // Make sure to install react-native-vector-icons
-
+import { MaterialIcons } from "@expo/vector-icons";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 const Footer = ({ selected }) => {
   return (
-    <View className="flex-row justify-around items-center bg-white py-5 px-2 border-t border-gray-200">
-      {selected === "Chats" ? (
-        <TouchableOpacity className="items-center">
-          <Icon name="chatbubble-sharp" size={24} className="text-gray-800" />
-          <Text className="text-xs text-gray-800">Chats</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity className="items-center">
-          <Icon name="chatbubble-outline" size={24} className="text-gray-800" />
-          <Text className="text-xs text-gray-800">Chats</Text>
-        </TouchableOpacity>
-      )}
-      <TouchableOpacity className="items-center">
-        <Icon name="search-outline" size={24} className="text-gray-800" />
-        <Text className="text-xs text-gray-800">Search</Text>
-      </TouchableOpacity>
-      <TouchableOpacity className="items-center">
-        <Icon name="add-circle-outline" size={24} className="text-gray-800" />
-        <Text className="text-xs text-gray-800">Add</Text>
-      </TouchableOpacity>
-      <TouchableOpacity className="items-center">
-        <Icon name="heart-outline" size={24} className="text-gray-800" />
-        <Text className="text-xs text-gray-800">Likes</Text>
-      </TouchableOpacity>
-      <TouchableOpacity className="items-center">
-        <Icon name="person-outline" size={24} className="text-gray-800" />
-        <Text className="text-xs text-gray-800">Profile</Text>
+    <View
+      style={{
+        position: "absolute",
+        left: wp(60),
+        right: 0,
+        bottom: wp(10),
+        alignItems: "center",
+      }}
+    >
+      <TouchableOpacity>
+        <View
+          style={{
+            borderWidth: 1, // Adjust the border thickness
+            borderColor: "black", // Set the border color
+            borderRadius: 30, // Half of your width and height to make it circular
+            width: wp(13), // Match the icon size or adjust as needed
+            height: wp(13), // Match the icon size or adjust as needed
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <MaterialIcons
+            name="keyboard-voice"
+            size={wp(10)}
+            color="black" // Use color prop for the icon color
+          />
+        </View>
       </TouchableOpacity>
     </View>
   );

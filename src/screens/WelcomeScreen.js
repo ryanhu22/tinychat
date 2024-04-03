@@ -59,7 +59,7 @@ export default function WelcomeScreen() {
             ),
             title: "Keep doing what you love",
             subtitle:
-              "Read and respond to emails seamlessly, using voice commands",
+              "Read and respond to messages seamlessly, using voice commands",
           },
         ]}
       />

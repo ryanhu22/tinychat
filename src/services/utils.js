@@ -46,11 +46,11 @@ const fetchUserData = async (userEmail) => {
 };
 
 // params: first_name, last_name, email
-const storeUserData = async (first_name, last_name, email) => {
+const storeUserData = async (first_name, last_name, email, downloadURL) => {
   try {
     await AsyncStorage.setItem(
       "userData",
-      JSON.stringify({ first_name, last_name, email })
+      JSON.stringify({ first_name, last_name, email, avatar: downloadURL })
     );
   } catch (error) {
     console.error("AsyncStorage error: ", error.message);

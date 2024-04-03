@@ -205,6 +205,33 @@ const ChatScreen = ({ navigation, route }) => {
               text,
               true
             );
+          } else {
+            // Receiver likely deleted the conversation, so create a new one
+            // Needed: Create a new conversation (inverse) for receiver
+            const receiverConversationRef = await addDoc(
+              collection(db, "conversations"),
+              {
+                last_message: "",
+                last_message_timestamp: serverTimestamp(),
+                receiver_email: myData.email,
+                sender_email: receiverEmail,
+                is_unread: false,
+              }
+            );
+            // Send message
+            await addMessageToFirestore(
+              receiverConversationRef.id,
+              _id,
+              text,
+              user,
+              false
+            );
+            // Update receiver's conversations DB
+            await updateConversationLastMessage(
+              receiverConversationRef.id,
+              text,
+              true
+            );
           }
         } else {
           console.log("Sending a message to myself");

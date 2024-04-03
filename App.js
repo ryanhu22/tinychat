@@ -4,6 +4,7 @@ import { AuthStack, HomeStack } from "./src/navigation";
 import { NavigationContainer } from "@react-navigation/native";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./src/config/firebase";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const AuthenticatedUserContext = createContext({});
 
@@ -42,8 +43,10 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthenticatedUserProvider>
-      <RootNavigator />
-    </AuthenticatedUserProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthenticatedUserProvider>
+        <RootNavigator />
+      </AuthenticatedUserProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -11,6 +11,7 @@ import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
 import ChatScreen from "../screens/ChatScreen";
 import NewMessageScreen from "../screens/NewMessageScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -37,6 +38,14 @@ function HomeStack() {
       <Stack.Screen
         name="NewMessage"
         component={NewMessageScreen}
+        options={{
+          presentation: "modal", // This will make the screen slide up from the bottom like a modal
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
         options={{
           presentation: "modal", // This will make the screen slide up from the bottom like a modal
           headerShown: false,

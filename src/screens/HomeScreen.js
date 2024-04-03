@@ -14,7 +14,9 @@ import React, {
 } from "react";
 import {
   collection,
+  doc,
   addDoc,
+  deleteDoc,
   orderBy,
   query,
   onSnapshot,
@@ -93,7 +95,7 @@ const HomeScreen = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <TouchableOpacity onPress={handleSignOut}>
+        <TouchableOpacity onPress={navigateProfile}>
           <Image
             source={{ uri: avatar }}
             style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
@@ -107,6 +109,10 @@ const HomeScreen = () => {
       ),
     });
   }, [navigation, avatar]);
+
+  const navigateProfile = () => {
+    navigation.navigate("Profile");
+  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -138,32 +144,62 @@ const HomeScreen = () => {
     );
   };
 
+  const alertDelete = (conversationId) => {
+    Alert.alert(
+      "Delete Conversation", // Alert Title
+      "Are you sure you want to delete this conversation?", // Alert Message
+      [
+        { text: "Cancel", style: "cancel" }, // Cancel button
+        {
+          // Confirm button
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteConversation(conversationId), // Call deleteConversation if confirmed
+        },
+      ],
+      { cancelable: true } // Make it so tapping outside dismisses the alert
+    );
+  };
+
+  const deleteConversation = async (conversationId) => {
+    try {
+      const conversationRef = doc(db, "conversations", conversationId);
+      await deleteDoc(conversationRef);
+      console.log(`Conversation with ID ${conversationId} has been deleted.`);
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+    }
+  };
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1 bg-white h-full">
-        {conversations.map((conversation) => (
-          <ConversationPreview
-            key={conversation.conversation_id}
-            navigateChat={() => {
-              navigation.navigate("Chat", {
-                conversationId: conversation.conversation_id,
-                receiverName: conversation.receiver_name,
-                receiverEmail: conversation.receiver_email,
-                receiverAvatar: conversation.avatar
-                  ? conversation.avatar
-                  : defaultAvatar,
-                myAvatar: avatar,
-              });
-            }}
-            msgAvatar={
-              conversation.avatar ? conversation.avatar : defaultAvatar
-            }
-            msgName={conversation.receiver_name}
-            msgLastMessage={conversation.last_message}
-            msgLastMessageTimestamp={conversation.last_message_timestamp}
-            msgIsUnread={conversation.is_unread}
-          />
-        ))}
+        {conversations.length > 0
+          ? conversations.map((conversation) => (
+              <ConversationPreview
+                key={conversation.conversation_id}
+                navigateChat={() => {
+                  navigation.navigate("Chat", {
+                    conversationId: conversation.conversation_id,
+                    receiverName: conversation.receiver_name,
+                    receiverEmail: conversation.receiver_email,
+                    receiverAvatar: conversation.avatar
+                      ? conversation.avatar
+                      : defaultAvatar,
+                    myAvatar: avatar,
+                  });
+                }}
+                msgAvatar={
+                  conversation.avatar ? conversation.avatar : defaultAvatar
+                }
+                msgName={conversation.receiver_name}
+                msgLastMessage={conversation.last_message}
+                msgLastMessageTimestamp={conversation.last_message_timestamp}
+                msgIsUnread={conversation.is_unread}
+                onDelete={() => alertDelete(conversation.conversation_id)} // Pass a function that calls deleteConversation
+              />
+            ))
+          : null}
       </ScrollView>
       <Footer selected="Chats" />
     </View>
