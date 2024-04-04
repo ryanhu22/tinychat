@@ -82,7 +82,7 @@ const SignupScreen = () => {
       <Text className="text-center text-3xl mb-8">Sign Up for TinyChat</Text>
       <View className="flex-row justify-between">
         <TextInput
-          className="flex-1 border border-gray-300 p-3 rounded mb-4 ml-2"
+          className="flex-1 border border-gray-300 p-3 rounded mb-4"
           placeholder="First Name"
           onChangeText={(text) => setFirstName(text)}
         />

@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import React, { useRef, useState, useEffect } from "react";
 import {
   widthPercentageToDP as wp,
@@ -122,22 +122,62 @@ const ProfileScreen = () => {
   };
 
   return (
-    <View className="flex-1 justify-center px-4">
+    <View style={styles.container}>
       <TouchableOpacity onPress={handleChoosePhoto}>
-        <Image
-          source={{ uri: avatar }}
-          style={{ width: wp(20), height: wp(20), borderRadius: wp(10) }} // Use inline styles or a StyleSheet object
-        />
+        <Image source={{ uri: avatar }} style={styles.avatar} />
       </TouchableOpacity>
-      <Text>
+      <Text style={styles.name}>
         {user.first_name} {user.last_name}
       </Text>
-      <Text>{user.email}</Text>
-      <TouchableOpacity onPress={updateUser}>
-        <Text>Save</Text>
-      </TouchableOpacity>
+      <Text style={styles.email}>{user.email}</Text>
+      <View style={styles.actionContainer}>
+        <TouchableOpacity style={styles.button} onPress={updateUser}>
+          <Text style={styles.buttonText}>Save</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF",
+  },
+  avatar: {
+    width: wp("30%"),
+    height: wp("30%"),
+    borderRadius: wp("15%"),
+    marginBottom: 10,
+  },
+  name: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 16,
+    color: "gray",
+    marginBottom: 24,
+  },
+  actionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  button: {
+    backgroundColor: "#000", // Change this to your preferred button color
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  buttonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
 
 export default ProfileScreen;
