@@ -6,11 +6,15 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import * as Animatable from "react-native-animatable";
+import { Audio } from "expo-av";
 
 const Footer = ({ selected }) => {
   const [voiceOn, setVoiceOn] = useState(false);
 
   const toggleVoice = () => {
+    if (!voiceOn) {
+      startRecording();
+    }
     setVoiceOn(!voiceOn);
   };
 
@@ -25,6 +29,65 @@ const Footer = ({ selected }) => {
       scale: 1,
     },
   };
+
+  async function startRecording() {
+    try {
+      // Request permission to access audio
+      const permission = await Audio.requestPermissionsAsync();
+      if (permission.status !== "granted") {
+        alert("Permission to access microphone is required!");
+        return;
+      }
+
+      // Set audio mode
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      // Prepare for recording
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(
+        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+      );
+
+      // Start recording
+      await recording.startAsync();
+
+      // Here, you can set a timer or a UI interaction to stop recording
+      // For simplicity, let's stop after 5 seconds
+      setTimeout(async () => {
+        await recording.stopAndUnloadAsync();
+
+        // Get the URI of the recorded file
+        const uri = recording.getURI();
+
+        // Here, send the URI or the file itself to your backend
+        // For example, using fetch to POST the file to your backend
+        const formData = new FormData();
+        formData.append("voice", {
+          uri,
+          name: "voiceRecording.m4a",
+          type: "audio/m4a",
+        });
+
+        console.log(uri);
+
+        fetch("http://localhost:8000/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => console.log(data))
+          .catch((error) => console.log(error));
+
+        setVoiceOn(false);
+      }, 5000);
+    } catch (error) {
+      console.log("Error during recording", error);
+    }
+  }
+
   return (
     <View
       style={{
