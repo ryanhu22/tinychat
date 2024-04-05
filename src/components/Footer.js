@@ -1,18 +1,35 @@
-import React, { useState } from "react";
-import { View, TouchableOpacity, Text, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, TouchableOpacity, Button, Text, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import * as Animatable from "react-native-animatable";
+import { Audio } from "expo-av";
+import Voice from "@react-native-voice/voice";
 
 const Footer = ({ selected }) => {
   const [voiceOn, setVoiceOn] = useState(false);
+  const [results, setResults] = useState([]);
+  console.log(results);
 
-  const toggleVoice = () => {
-    setVoiceOn(!voiceOn);
-  };
+  useEffect(() => {
+    Voice.onSpeechError = onSpeechError;
+    Voice.onSpeechResults = onSpeechResults;
+
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
+  }, []);
+
+  // Effect for handling results update timeout
+  useEffect(() => {
+    // After 3 seconds of timeout, do something
+    const timer = setTimeout(doSomething, 3000);
+
+    return () => clearTimeout(timer); // Clear timeout if results update or component unmounts
+  }, [results[0]]);
 
   const pulse = {
     0: {
@@ -25,6 +42,44 @@ const Footer = ({ selected }) => {
       scale: 1,
     },
   };
+
+  const onSpeechResults = (result) => {
+    setResults(result.value);
+  };
+
+  const onSpeechError = (err) => {
+    console.log(err);
+  };
+
+  async function startRecording() {
+    try {
+      await Voice.start("en-US");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function stopRecording() {
+    try {
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const toggleVoice = async () => {
+    if (!voiceOn) {
+      await startRecording();
+    } else {
+      await stopRecording();
+    }
+    setVoiceOn(!voiceOn);
+  };
+
+  const doSomething = () => {
+    console.log("doSomething was called due to inactivity");
+  };
+
   return (
     <View
       style={{

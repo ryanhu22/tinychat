@@ -13,12 +13,13 @@ import {
 } from "react-native-responsive-screen";
 import { Swipeable } from "react-native-gesture-handler";
 import moment from "moment";
-import { MaterialIcons } from "@expo/vector-icons"; // Assuming you're using Expo
+import { MaterialIcons, EvilIcons } from "@expo/vector-icons"; // Assuming you're using Expo
 
 const ConversationPreview = ({
   navigateChat,
   msgAvatar,
   msgName,
+  msgEmail,
   msgLastMessage,
   msgLastMessageTimestamp,
   msgIsUnread,
@@ -33,7 +34,7 @@ const ConversationPreview = ({
 
     if (date.isSame(today, "day")) {
       // Message is from today
-      return date.format("h:mm A");
+      return date.format("h:mm a");
     } else if (date.year() === currentYear) {
       // Message is from this year
       return date.format("MM/DD");
@@ -46,7 +47,7 @@ const ConversationPreview = ({
   const renderRightActions = (progress, dragX) => {
     const trans = progress.interpolate({
       inputRange: [0, 1],
-      outputRange: [45, 0], // Start the translateX from 45 (half-hidden) to 0 (fully shown)
+      outputRange: [100, 0], // Start the translateX from 100 (fully hidden) to 0 (fully shown)
     });
 
     return (
@@ -66,7 +67,7 @@ const ConversationPreview = ({
           }}
           onPress={onDelete}
         >
-          <MaterialIcons name="delete" size={30} color="white" />
+          <EvilIcons name="trash" size={45} color="white" />
         </TouchableOpacity>
       </Animated.View>
     );
@@ -94,9 +95,12 @@ const ConversationPreview = ({
             source={{ uri: msgAvatar }}
             className="rounded-full h-12 w-12"
           />
-          <View className="flex-1 ml-4">
-            <Text className="font-bold">{msgName}</Text>
-            <Text className="text-gray-500">
+          <View className="flex-1 ml-4 space-y-1">
+            <View className="flex-row space-x-1 items-center">
+              <Text className="font-bold">{msgName}</Text>
+              <Text className="text-gray-500 text-xs">+{msgEmail}</Text>
+            </View>
+            <Text className="text-gray-600">
               {msgLastMessage.length > 20
                 ? `${msgLastMessage.substring(0, 20)}...`
                 : msgLastMessage}

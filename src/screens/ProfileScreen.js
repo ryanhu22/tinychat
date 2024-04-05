@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, Alert } from "react-native";
 import React, { useRef, useState, useEffect } from "react";
 import {
   widthPercentageToDP as wp,
@@ -12,7 +12,12 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import { getMyData, fetchUserData, storeUserData } from "../services/utils";
+import {
+  getMyData,
+  fetchUserData,
+  storeUserData,
+  clearAsyncStorage,
+} from "../services/utils";
 import {
   collection,
   addDoc,
@@ -25,9 +30,11 @@ import {
   serverTimestamp,
   getDocs,
 } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
+import { Feather } from "@expo/vector-icons";
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const [avatar, setAvatar] = useState(
     "https://firebasestorage.googleapis.com/v0/b/tinychat-0613.appspot.com/o/default_profile_picture.jpeg?alt=media&token=aabbaef0-3ec5-448d-919a-dc8fe20b0605"
   );
@@ -45,6 +52,10 @@ const ProfileScreen = () => {
     };
     fetchData();
   }, []);
+
+  const closeModal = () => {
+    navigation.goBack();
+  };
 
   const handleChoosePhoto = async () => {
     const permissionResult =
@@ -121,63 +132,73 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: () => {
+            clearAsyncStorage();
+            signOut(auth)
+              .then(() => {
+                // Sign-out successful.
+                console.log("Logged out successfully");
+              })
+              .catch((error) => {
+                // An error happened.
+                console.error("Error logging out", error);
+              });
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   return (
-    <View style={styles.container}>
+    <View className="flex-1 items-center justify-center bg-white">
+      <View className="absolute top-5 left-5">
+        <TouchableOpacity onPress={() => closeModal()}>
+          <Feather name="x" size={24} color="black" />
+        </TouchableOpacity>
+      </View>
+      <View className="absolute top-5 right-5">
+        <TouchableOpacity onPress={handleSignOut}>
+          <Text className="color-red-500">Log out</Text>
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity onPress={handleChoosePhoto}>
-        <Image source={{ uri: avatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: avatar }}
+          style={{
+            width: wp("25%"),
+            height: wp("25%"),
+            borderRadius: wp("15%"),
+            marginBottom: 10,
+          }}
+        />
       </TouchableOpacity>
-      <Text style={styles.name}>
+      <Text className="text-xl font-bold mt-2 mb-1">
         {user.first_name} {user.last_name}
       </Text>
-      <Text style={styles.email}>{user.email}</Text>
-      <View style={styles.actionContainer}>
-        <TouchableOpacity style={styles.button} onPress={updateUser}>
-          <Text style={styles.buttonText}>Save</Text>
+      <Text className="text-base text-gray-500 mb-6">{user.email}</Text>
+      <View className="flex-row items-center">
+        <TouchableOpacity
+          className="bg-black py-2.5 px-4 rounded-full"
+          onPress={updateUser}
+        >
+          <Text className="text-white text-base font-semibold">Save</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFF",
-  },
-  avatar: {
-    width: wp("30%"),
-    height: wp("30%"),
-    borderRadius: wp("15%"),
-    marginBottom: 10,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    color: "gray",
-    marginBottom: 24,
-  },
-  actionContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  button: {
-    backgroundColor: "#000", // Change this to your preferred button color
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-  },
-  buttonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default ProfileScreen;

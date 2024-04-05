@@ -23,7 +23,6 @@ import {
   toDate,
   where,
 } from "firebase/firestore";
-import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { Entypo } from "@expo/vector-icons";
@@ -95,7 +94,7 @@ const HomeScreen = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <TouchableOpacity onPress={navigateProfile}>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Image
             source={{ uri: avatar }}
             style={{ width: 32, height: 32, borderRadius: 16 }} // Use inline styles or a StyleSheet object
@@ -110,38 +109,14 @@ const HomeScreen = () => {
     });
   }, [navigation, avatar]);
 
-  const navigateProfile = () => {
-    navigation.navigate("Profile");
-  };
-
-  const handleSignOut = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        {
-          text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            clearAsyncStorage();
-            signOut(auth)
-              .then(() => {
-                // Sign-out successful.
-                console.log("Logged out successfully");
-              })
-              .catch((error) => {
-                // An error happened.
-                console.error("Error logging out", error);
-              });
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+  const deleteConversation = async (conversationId) => {
+    try {
+      const conversationRef = doc(db, "conversations", conversationId);
+      await deleteDoc(conversationRef);
+      console.log(`Conversation with ID ${conversationId} has been deleted.`);
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+    }
   };
 
   const alertDelete = (conversationId) => {
@@ -159,16 +134,6 @@ const HomeScreen = () => {
       ],
       { cancelable: true } // Make it so tapping outside dismisses the alert
     );
-  };
-
-  const deleteConversation = async (conversationId) => {
-    try {
-      const conversationRef = doc(db, "conversations", conversationId);
-      await deleteDoc(conversationRef);
-      console.log(`Conversation with ID ${conversationId} has been deleted.`);
-    } catch (error) {
-      console.error("Error deleting conversation:", error);
-    }
   };
 
   return (
@@ -193,6 +158,7 @@ const HomeScreen = () => {
                   conversation.avatar ? conversation.avatar : defaultAvatar
                 }
                 msgName={conversation.receiver_name}
+                msgEmail={conversation.receiver_email}
                 msgLastMessage={conversation.last_message}
                 msgLastMessageTimestamp={conversation.last_message_timestamp}
                 msgIsUnread={conversation.is_unread}

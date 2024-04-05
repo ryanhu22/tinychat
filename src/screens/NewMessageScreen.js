@@ -65,6 +65,7 @@ const NewMessageScreen = ({ navigation }) => {
           receiverName: `${receiverData.first_name} ${receiverData.last_name}`,
           receiverEmail: receiverData.email,
           myAvatar: myData.avatar,
+          receiverAvatar: receiverData.avatar,
         });
       } else {
         // Create a new conversation
@@ -82,6 +83,7 @@ const NewMessageScreen = ({ navigation }) => {
           receiverName: `${receiverData.first_name} ${receiverData.last_name}`,
           receiverEmail: receiverData.email,
           myAvatar: myData.avatar,
+          receiverAvatar: receiverData.avatar,
         });
 
         // If you create a conversation with yourself, you should only create one conversation
