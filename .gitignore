@@ -8,6 +8,7 @@ node_modules/
 dist/
 web-build/
 tinychat.app/
+build-1712277070672.tar.gz
 
 # Native
 *.orig.*
