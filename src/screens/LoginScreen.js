@@ -17,6 +17,7 @@ const LoginScreen = () => {
 
   const onHandleLogin = async () => {
     if (email !== "" && password !== "") {
+      // TODO: Very destructive. Someone can just log in with any account.
       const myData = await fetchUserData(email);
       storeUserData(
         myData.first_name,

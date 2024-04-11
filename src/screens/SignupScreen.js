@@ -43,6 +43,8 @@ const SignupScreen = () => {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const defaultAvatar =
+    "https://firebasestorage.googleapis.com/v0/b/tinychat-0613.appspot.com/o/default_profile_picture.jpeg?alt=media&token=aabbaef0-3ec5-448d-919a-dc8fe20b0605";
 
   const navigateLogin = () => {
     navigation.navigate("Login");
@@ -69,7 +71,7 @@ const SignupScreen = () => {
       console.log(`New user created with ID: ${newUserRef.id}`);
 
       // Store user data in AsyncStorage
-      await storeUserData(firstName, lastName, email);
+      await storeUserData(firstName, lastName, email, defaultAvatar);
     } catch (err) {
       // Handle any errors that occur during the signup process
       console.error("Signup error:", err.message);

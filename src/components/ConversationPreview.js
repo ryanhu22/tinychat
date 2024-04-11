@@ -37,7 +37,7 @@ const ConversationPreview = ({
       return date.format("h:mm a");
     } else if (date.year() === currentYear) {
       // Message is from this year
-      return date.format("MM/DD");
+      return date.format("MMM DD");
     } else {
       // Message is from a previous year
       return date.format("MM/DD/YYYY");
