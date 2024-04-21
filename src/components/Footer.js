@@ -7,7 +7,6 @@ import {
 } from "react-native-responsive-screen";
 import * as Animatable from "react-native-animatable";
 import * as Speech from "expo-speech";
-// import Tts from "react-native-tts";
 import Voice from "@react-native-voice/voice";
 import { getMyData, fetchUserData, clearAsyncStorage } from "../services/utils";
 
@@ -22,6 +21,9 @@ const Footer = ({ selected }) => {
   // Create WebSocket connection
   const socket = useRef(null);
   const [serverMessage, setServerMessage] = useState("");
+
+  const [pauseUpdates, setPauseUpdates] = useState(false);
+  const pauseUpdatesRef = useRef(false);
 
   useEffect(() => {
     const loadMyData = async () => {
@@ -40,6 +42,35 @@ const Footer = ({ selected }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (serverMessage) {
+      (async () => {
+        // Attempt to stop recording before starting speech
+        // await stopRecording();
+        pauseUpdatesRef.current = true;
+        Speech.speak(serverMessage);
+
+        // Check periodically if Speech is still speaking
+        const checkSpeaking = async () => {
+          const isSpeaking = await Speech.isSpeakingAsync();
+          if (isSpeaking) {
+            // If still speaking, check again after a delay
+            setTimeout(checkSpeaking, 500);
+          } else {
+            await sleep(500);
+            await stopRecording();
+            await sleep(500);
+            await startRecording();
+            pauseUpdatesRef.current = false;
+          }
+        };
+
+        // Initial check
+        setTimeout(checkSpeaking, 500);
+      })();
+    }
+  }, [serverMessage]);
+
   // Used for WebSockets
   useEffect(() => {
     socket.current = new WebSocket("ws://localhost:8000");
@@ -54,7 +85,7 @@ const Footer = ({ selected }) => {
 
     socket.current.addEventListener("message", function (event) {
       console.log("Message from server:", event.data);
-      Speech.speak(event.data);
+      // Speech.speak(event.data);
       setServerMessage(event.data); // Update state with received message
     });
 
@@ -93,7 +124,12 @@ const Footer = ({ selected }) => {
   };
 
   const onSpeechResults = (result) => {
-    setResults(result.value);
+    if (!pauseUpdatesRef.current) {
+      console.log("Speech Results: " + result.value);
+      setResults(result.value);
+    } else {
+      console.log("Paused updates: " + result.value);
+    }
   };
 
   const onSpeechError = (err) => {
@@ -102,7 +138,9 @@ const Footer = ({ selected }) => {
 
   async function startRecording() {
     try {
+      setVoiceOn(true);
       await Voice.start("en-US");
+      console.log("Start Recording");
     } catch (e) {
       console.error(e);
     }
@@ -110,7 +148,9 @@ const Footer = ({ selected }) => {
 
   async function stopRecording() {
     try {
+      setVoiceOn(false);
       await Voice.stop();
+      console.log("Stop Recording");
     } catch (e) {
       console.error(e);
     }
@@ -135,16 +175,15 @@ const Footer = ({ selected }) => {
       message: message,
     };
 
-    console.log("Sending message...");
     if (socket.current) {
       socket.current.send(JSON.stringify(jsonData));
     }
   };
 
   const processMessage = async () => {
-    console.log("processMessage was called due to inactivity");
-    console.log("results: " + results[0]);
-    console.log("handleRef: " + handleRef.current);
+    // console.log("processMessage was called due to inactivity");
+    // console.log("results: " + results[0]);
+    // console.log("handleRef: " + handleRef.current);
 
     if (!handleRef.current && results[0]) {
       // Handle Multiple Calls
@@ -159,9 +198,8 @@ const Footer = ({ selected }) => {
       await startRecording();
       handleRef.current = false;
       setResults([]);
-      console.log("Reset results");
     } else {
-      console.log("*** This is a repeat. Do nothing ***");
+      return;
     }
   };
 
